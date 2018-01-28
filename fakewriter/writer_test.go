@@ -138,7 +138,7 @@ func TestAssertData_MismatchZero(t *testing.T) {
 func TestWriter_UnexpectedExtraWrite(t *testing.T) {
 	tt := new(gofaker.FailTriggerTest)
 
-	w := fakewriter.New(tt, nil)
+	w := fakewriter.New(tt)
 
 	n, err := w.Write([]byte{1})
 
@@ -148,37 +148,85 @@ func TestWriter_UnexpectedExtraWrite(t *testing.T) {
 	assert.Equal(t, "unexpected 1 write", tt.FailMessage)
 }
 
-func TestTruncateWrite(t *testing.T) {
+func TestShortWrite_Short_Success(t *testing.T) {
 	w := fakewriter.New(t,
-		fakewriter.ShortWrite(3),
-		fakewriter.ShortWrite(3),
+		fakewriter.ShortWrite(1, fakewriter.ExpectLen(3)),
+		fakewriter.ShortWrite(1, fakewriter.ExpectData([]byte{1, 2, 3})),
 	)
 
-	n, err := w.Write([]byte{1, 2, 3, 4, 5, 6, 7})
+	n, err := w.Write([]byte{3, 2, 1})
 	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
+	assert.Equal(t, 1, n)
 
-	n, err = w.Write([]byte{1})
+	n, err = w.Write([]byte{1, 2, 3})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 }
 
-func TestDelayWrite(t *testing.T) {
+func TestShortWrite_NoShort_Success(t *testing.T) {
+	w := fakewriter.New(t,
+		fakewriter.ShortWrite(3, fakewriter.ExpectLen(2)),
+		fakewriter.ShortWrite(3, fakewriter.ExpectData([]byte{1, 2})),
+	)
+
+	n, err := w.Write([]byte{2, 1})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+
+	n, err = w.Write([]byte{1, 2})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+}
+
+func TestShortWrite_Fail(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	w := fakewriter.New(tt,
+		fakewriter.ShortWrite(3, fakewriter.ExpectLen(2)),
+		fakewriter.ShortWrite(3, fakewriter.ExpectData([]byte{1, 2, 3})),
+	)
+
+	n, err := w.Write([]byte{3, 2, 1})
+	assert.NoError(t, err)
+	assert.Equal(t, 3, n)
+
+	n, err = w.Write([]byte{1, 2, 3})
+	assert.NoError(t, err)
+	assert.Equal(t, 3, n)
+}
+
+func TestDelayWrite_Success(t *testing.T) {
 	now := time.Now()
 	clk := clock.NewFakeClock(now).Source()
 
 	w := fakewriter.New(t,
-		fakewriter.DelayWrite(15*time.Second, clk),
-		fakewriter.DelayWrite(25*time.Second, clk),
+		fakewriter.DelayWrite(15*time.Second, fakewriter.ExpectLen(3), clk),
+		fakewriter.DelayWrite(25*time.Second, fakewriter.ExpectData([]byte{1, 2, 3}), clk),
 	)
 
-	n, err := w.Write([]byte{1, 2, 3, 4, 5, 6, 7})
+	n, err := w.Write([]byte{1, 2, 3})
 	assert.NoError(t, err)
-	assert.Equal(t, 7, n)
+	assert.Equal(t, 3, n)
 	assert.Equal(t, now.Add(15*time.Second), clk.Now())
 
-	n, err = w.Write([]byte{1, 2, 3, 4, 5, 6, 7})
+	n, err = w.Write([]byte{1, 2, 3})
 	assert.NoError(t, err)
-	assert.Equal(t, 7, n)
+	assert.Equal(t, 3, n)
 	assert.Equal(t, now.Add(40*time.Second), clk.Now())
+}
+
+func TestDelayWrite_Fail(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	now := time.Now()
+	clk := clock.NewFakeClock(now).Source()
+
+	w := fakewriter.New(tt,
+		fakewriter.DelayWrite(15*time.Second, fakewriter.ExpectData([]byte{1, 2, 3}), clk),
+	)
+
+	n, err := w.Write([]byte{1})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, now.Add(15*time.Second), clk.Now())
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "invalid data: [01 02 03] expected but [01] recieved", tt.FailMessage)
 }
