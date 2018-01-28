@@ -1,21 +1,24 @@
 package fakereader_test
 
 import (
-	"errors"
-	"io"
+	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/albenik/gofaker/fakereader"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/albenik/gofaker"
+	"github.com/albenik/gofaker/clock"
+	"github.com/albenik/gofaker/fakereader"
 )
 
-func TestReader_Read(t *testing.T) {
-	r := fakereader.Reader{Flow: []io.Reader{
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2}},
-		&fakereader.DataChunk{Bytes: []byte{1}},
-	}}
+func TestReader_Read_Success(t *testing.T) {
+	r := fakereader.New(t,
+		bytes.NewReader([]byte{1, 2, 3}),
+		bytes.NewReader([]byte{1, 2}),
+		bytes.NewReader([]byte{1}),
+	)
 
 	read := func(expect []byte) {
 		buf := make([]byte, len(expect))
@@ -28,137 +31,134 @@ func TestReader_Read(t *testing.T) {
 	read([]byte{1, 2, 3})
 	read([]byte{1, 2})
 	read([]byte{1})
-
-	n, err := r.Read(make([]byte, 3))
-	assert.EqualError(t, err, "unexpected 4 read")
-	assert.Equal(t, 0, n)
 }
 
-func TestDataChunk_ReadStrict(t *testing.T) {
-	r := fakereader.Reader{Flow: []io.Reader{
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true},
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true},
-	}}
+func TestReader_Read_Fail(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	r := fakereader.New(tt)
 
-	n, err := r.Read(make([]byte, 3))
+	buf := make([]byte, 3)
+	n, err := r.Read(buf)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
-
-	n, err = r.Read(make([]byte, 7))
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
-
-	n, err = r.Read(make([]byte, 1))
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 1")
 	assert.Equal(t, 0, n)
-
-	n, err = r.Read([]byte{})
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 0")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read(nil)
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 0")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read(make([]byte, 3))
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
-
-	n, err = r.Read(make([]byte, 7))
-	assert.EqualError(t, err, "buffer to large: required size 3 but brovides 7")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read(make([]byte, 1))
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 1")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read([]byte{})
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 0")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read(nil)
-	assert.EqualError(t, err, "buffer too small: required size 3 but provided 0")
-	assert.Equal(t, 0, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "unexpected 1 read", tt.FailMessage)
 }
 
-func TestDataChunk_ReadWithErr(t *testing.T) {
-	r := fakereader.Reader{Flow: []io.Reader{
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Err: errors.New("test error 1")},
-		&fakereader.DataChunk{Bytes: []byte{}, Err: errors.New("test error 2")},
-		&fakereader.DataChunk{Bytes: nil, Err: errors.New("test error 3")},
-	}}
+func TestStrictBytesReader_Success(t *testing.T) {
+	r := fakereader.New(t,
+		fakereader.StrictBytesReader([]byte{1, 2, 3}),
+		fakereader.StrictBytesReader([]byte{1, 2}),
+		fakereader.StrictBytesReader([]byte{1}),
+	)
 
-	n, err := r.Read(make([]byte, 3))
-	assert.EqualError(t, err, "test error 1")
-	assert.Equal(t, 3, n)
+	read := func(expect []byte) {
+		buf := make([]byte, len(expect))
+		n, err := r.Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, len(expect), n)
+		assert.Equal(t, expect, buf)
+	}
 
-	n, err = r.Read(make([]byte, 3))
-	assert.EqualError(t, err, "test error 2")
-	assert.Equal(t, 0, n)
-
-	n, err = r.Read(make([]byte, 3))
-	assert.EqualError(t, err, "test error 3")
-	assert.Equal(t, 0, n)
+	read([]byte{1, 2, 3})
+	read([]byte{1, 2})
+	read([]byte{1})
 }
 
-func TestDataChunk_ReadWithDelay(t *testing.T) {
-	d := 111 * time.Millisecond
-	r := fakereader.Reader{Flow: []io.Reader{
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Delay: d},                                              // 1
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Delay: d},                                              // 2
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true, Delay: d},                                // 3
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true, Delay: d},                                // 4
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true, Delay: d},                                // 5
-		&fakereader.DataChunk{Bytes: []byte{1, 2, 3}, Strict: true, Delay: d, Err: errors.New("test error")}, // 6
-	}}
+func TestStrictBytesReader_Fail(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	r := fakereader.New(tt,
+		fakereader.StrictBytesReader([]byte{1, 2, 3}),
+		fakereader.StrictBytesReader([]byte{1, 2}),
+		fakereader.StrictBytesReader([]byte{1}),
+	)
 
-	// 1
-	start := time.Now()
-	n, err := r.Read(make([]byte, 3))
-	assert.True(t, time.Since(start) >= d)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
+	read := func(expected, actual int) {
+		buf := make([]byte, expected)
+		n, err := r.Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, actual, n)
+		if assert.True(t, tt.FailedAsExpected) {
+			assert.Equal(t, fmt.Sprintf("expected buffer length is %d but actual is %d", actual, expected), tt.FailMessage)
+		}
+	}
 
-	// 2
-	start = time.Now()
-	n, err = r.Read(make([]byte, 1))
-	assert.True(t, time.Since(start) >= d)
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
+	read(7, 3)
+	read(6, 2)
+	read(5, 1)
+}
 
-	// 3
-	start = time.Now()
-	n, err = r.Read(make([]byte, 3))
-	assert.True(t, time.Since(start) >= d)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
+func TestDelayRead(t *testing.T) {
+	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
+	fakeclock := clock.NewFakeClock(now).Source()
 
-	// 4
-	start = time.Now()
-	n, err = r.Read(make([]byte, 1))
-	assert.True(t, time.Since(start) >= d)
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
+	r := fakereader.New(t,
+		fakereader.DelayRead(3*time.Second, bytes.NewReader([]byte{1, 2, 3}), fakeclock),
+		fakereader.DelayRead(2*time.Second, bytes.NewReader([]byte{1, 2}), fakeclock),
+		fakereader.DelayRead(1*time.Second, bytes.NewReader([]byte{1}), fakeclock),
+	)
 
-	// 5
-	start = time.Now()
-	n, err = r.Read(make([]byte, 7))
-	assert.True(t, time.Since(start) >= d)
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
+	read := func(expectData []byte, expectTime time.Time) {
+		buf := make([]byte, len(expectData))
+		n, err := r.Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, len(expectData), n)
+		assert.Equal(t, expectData, buf)
+		assert.Equal(t, expectTime, fakeclock.Now())
+	}
 
-	// 6
-	start = time.Now()
-	n, err = r.Read(make([]byte, 3))
-	assert.True(t, time.Since(start) >= d)
-	assert.EqualError(t, err, "test error")
-	assert.Equal(t, 3, n)
+	read([]byte{1, 2, 3}, now.Add(3*time.Second))
+	read([]byte{1, 2}, now.Add(5*time.Second))
+	read([]byte{1}, now.Add(6*time.Second))
+}
+
+func TestDelayRead_Strict_Success(t *testing.T) {
+	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
+	fakeclock := clock.NewFakeClock(now).Source()
+
+	r := fakereader.New(t,
+		fakereader.DelayRead(3*time.Second, fakereader.StrictBytesReader([]byte{1, 2, 3}), fakeclock),
+		fakereader.DelayRead(2*time.Second, fakereader.StrictBytesReader([]byte{1, 2}), fakeclock),
+		fakereader.DelayRead(1*time.Second, fakereader.StrictBytesReader([]byte{1}), fakeclock),
+	)
+
+	read := func(expectData []byte, expectTime time.Time) {
+		buf := make([]byte, len(expectData))
+		n, err := r.Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, len(expectData), n)
+		assert.Equal(t, expectData, buf)
+		assert.Equal(t, expectTime, fakeclock.Now())
+	}
+
+	read([]byte{1, 2, 3}, now.Add(3*time.Second))
+	read([]byte{1, 2}, now.Add(5*time.Second))
+	read([]byte{1}, now.Add(6*time.Second))
+}
+
+func TestDelayRead_Strict_Fail(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
+	fakeclock := clock.NewFakeClock(now).Source()
+
+	r := fakereader.New(tt,
+		fakereader.DelayRead(3*time.Second, fakereader.StrictBytesReader([]byte{1, 2, 3}), fakeclock),
+		fakereader.DelayRead(2*time.Second, fakereader.StrictBytesReader([]byte{1, 2}), fakeclock),
+		fakereader.DelayRead(1*time.Second, fakereader.StrictBytesReader([]byte{1}), fakeclock),
+	)
+
+	read := func(expectedLen, actualLen int, expectTime time.Time) {
+		buf := make([]byte, expectedLen)
+		n, err := r.Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, actualLen, n)
+		assert.Equal(t, expectTime, fakeclock.Now())
+		if assert.True(t, tt.FailedAsExpected) {
+			assert.Equal(t, fmt.Sprintf("expected buffer length is %d but actual is %d", actualLen, expectedLen), tt.FailMessage)
+		}
+	}
+
+	read(7, 3, now.Add(3*time.Second))
+	read(6, 2, now.Add(5*time.Second))
+	read(5, 1, now.Add(6*time.Second))
 }
