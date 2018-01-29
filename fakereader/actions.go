@@ -18,8 +18,8 @@ func (f ReaderFunc) Read(p []byte) (int, error) {
 func StrictBytesReader(data []byte) io.Reader {
 	return ReaderFunc(func(p []byte) (int, error) {
 		n := copy(p, data)
-		if n != len(p) {
-			return n, &gofaker.ErrTestFailed{Msg: fmt.Sprintf("expected buffer length is %d but actual is %d", len(data), len(p))}
+		if n != len(data) {
+			return n, &gofaker.ErrTestFailed{Msg: fmt.Sprintf("expected buffer length is %d but actual is %d", len(data), n)}
 		}
 		return n, nil
 	})

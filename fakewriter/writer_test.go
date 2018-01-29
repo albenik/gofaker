@@ -11,6 +11,40 @@ import (
 	"github.com/albenik/gofaker/fakewriter"
 )
 
+func TestWriter_EOF(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+
+	w := fakewriter.New(tt)
+
+	n, err := w.Write([]byte{1})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "unexpected 1 write", tt.FailMessage)
+}
+
+func TestWriter_Locked(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+
+	w := fakewriter.New(tt,
+		fakewriter.ExpectLen(101),
+		fakewriter.ExpectLen(102),
+		fakewriter.ExpectLen(103),
+	)
+
+	n, err := w.Write([]byte{1})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "invalid data length: 101 expected but 1 recieved", tt.FailMessage)
+
+	n, err = w.Write([]byte{1})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "writer locked at 2 write", tt.FailMessage)
+}
+
 func TestAssertLen_OK(t *testing.T) {
 	w := fakewriter.New(t,
 		fakewriter.ExpectLen(3),
@@ -135,19 +169,6 @@ func TestAssertData_MismatchZero(t *testing.T) {
 	assert.Equal(t, "invalid data: [01 02 03] expected but [] recieved", tt.FailMessage)
 }
 
-func TestWriter_UnexpectedExtraWrite(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
-
-	w := fakewriter.New(tt)
-
-	n, err := w.Write([]byte{1})
-
-	assert.NoError(t, err)
-	assert.Equal(t, 0, n)
-	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "unexpected 1 write", tt.FailMessage)
-}
-
 func TestShortWrite_Short_Success(t *testing.T) {
 	w := fakewriter.New(t,
 		fakewriter.ShortWrite(1, fakewriter.ExpectLen(3)),
@@ -178,20 +199,30 @@ func TestShortWrite_NoShort_Success(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
-func TestShortWrite_Fail(t *testing.T) {
+func TestShortWrite_FailLen(t *testing.T) {
 	tt := new(gofaker.FailTriggerTest)
 	w := fakewriter.New(tt,
-		fakewriter.ShortWrite(3, fakewriter.ExpectLen(2)),
-		fakewriter.ShortWrite(3, fakewriter.ExpectData([]byte{1, 2, 3})),
+		fakewriter.ShortWrite(1, fakewriter.ExpectLen(2)),
 	)
 
 	n, err := w.Write([]byte{3, 2, 1})
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "invalid data length: 2 expected but 3 recieved", tt.FailMessage)
+}
 
-	n, err = w.Write([]byte{1, 2, 3})
+func TestShortWrite_FailData(t *testing.T) {
+	tt := new(gofaker.FailTriggerTest)
+	w := fakewriter.New(tt,
+		fakewriter.ShortWrite(1, fakewriter.ExpectData([]byte{1, 2, 3})),
+	)
+
+	n, err := w.Write([]byte{3, 2, 1})
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
+	assert.True(t, tt.FailedAsExpected)
+	assert.Equal(t, "invalid data: [01 02 03] expected but [03 02 01] recieved", tt.FailMessage)
 }
 
 func TestDelayWrite_Success(t *testing.T) {

@@ -1,39 +1,41 @@
 package fakereader
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/albenik/gofaker"
 )
 
 type Reader struct {
-	t    gofaker.FailTrigger
-	flow []io.Reader
-	pos  int
+	t       gofaker.FailTrigger
+	readers []io.Reader
+	rnum    int
+	locked  bool
 }
 
 func New(t gofaker.FailTrigger, flow ...io.Reader) *Reader {
-	return &Reader{t: t, flow: flow}
+	return &Reader{t: t, readers: flow}
 }
 
 func (r *Reader) Read(p []byte) (int, error) {
-	var n int
-	var err error
-
-	if r.pos < len(r.flow) {
-		fr := r.flow[r.pos]
-		r.pos++
-		if n, err = fr.Read(p); err == nil {
-			return n, nil
-		}
-	} else {
-		err = &gofaker.ErrTestFailed{Msg: fmt.Sprintf("unexpected %d read", r.pos+1)}
+	if r.locked {
+		r.t.Fatalf("reader locked at %d read", r.rnum+1)
+		return 0, nil
+	}
+	if r.rnum >= len(r.readers) {
+		r.t.Fatalf("unexpected %d read", r.rnum+1)
+		return 0, nil
 	}
 
-	if fail, ok := err.(*gofaker.ErrTestFailed); ok {
-		err = nil
-		r.t.Fatal(fail.Msg)
+	fr := r.readers[r.rnum]
+	r.rnum++
+	n, err := fr.Read(p)
+	if err != nil {
+		if fail, ok := err.(*gofaker.ErrTestFailed); ok {
+			err = nil
+			r.rnum = len(r.readers) // all next read will fail
+			r.t.Fatal(fail.Msg)
+		}
 	}
 	return n, err
 }
