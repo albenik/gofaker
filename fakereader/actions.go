@@ -31,3 +31,9 @@ func DelayRead(d time.Duration, r io.Reader, clock *clock.Source) io.Reader {
 		return r.Read(p)
 	})
 }
+
+func ReadError(err error) io.Reader {
+	return ReaderFunc(func(p []byte) (int, error) {
+		return 0, err
+	})
+}

@@ -19,7 +19,7 @@ func (f WriterFunc) Write(p []byte) (int, error) {
 func ExpectLen(l int) io.Writer {
 	return WriterFunc(func(p []byte) (int, error) {
 		if len(p) != l {
-			return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data length: %d expected but %d recieved", l, len(p))}
+			return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data length: %d expected but %d recieved [% X]", l, len(p), p)}
 		}
 		return len(p), nil
 	})
@@ -51,5 +51,18 @@ func DelayWrite(d time.Duration, w io.Writer, clock *clock.Source) io.Writer {
 	return WriterFunc(func(p []byte) (int, error) {
 		clock.Sleep(d)
 		return w.Write(p)
+	})
+}
+
+func ForceLen(l int, w io.Writer) io.Writer {
+	return WriterFunc(func(p []byte) (int, error) {
+		_, err := w.Write(p)
+		return l, err
+	})
+}
+
+func WriteError(err error) io.Writer {
+	return WriterFunc(func(p []byte) (int, error) {
+		return 0, err
 	})
 }

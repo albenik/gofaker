@@ -2,6 +2,7 @@ package fakereader_test
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 	"time"
 
@@ -146,4 +147,14 @@ func TestDelayRead_Strict_Fail(t *testing.T) {
 	if assert.True(t, tt.FailedAsExpected) {
 		assert.Equal(t, "expected buffer length is 3 but actual is 1", tt.FailMessage)
 	}
+}
+
+func TestReadError(t *testing.T) {
+	r := fakereader.New(t,
+		fakereader.ReadError(errors.New("custom read error")),
+	)
+	p := make([]byte, 1)
+	n, err := r.Read(p)
+	assert.EqualError(t, err, "custom read error")
+	assert.Equal(t, 0, n)
 }

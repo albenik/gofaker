@@ -1,6 +1,7 @@
 package fakewriter_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -260,4 +261,22 @@ func TestDelayWrite_Fail(t *testing.T) {
 	assert.Equal(t, now.Add(15*time.Second), clk.Now())
 	assert.True(t, tt.FailedAsExpected)
 	assert.Equal(t, "invalid data: [01 02 03] expected but [01] recieved", tt.FailMessage)
+}
+
+func TestWriteError(t *testing.T) {
+	w := fakewriter.New(t,
+		fakewriter.WriteError(errors.New("custom write error")),
+	)
+	n, err := w.Write([]byte{1})
+	assert.EqualError(t, err, "custom write error")
+	assert.Equal(t, 0, n)
+}
+
+func TestForceLen(t *testing.T) {
+	w := fakewriter.New(t,
+		fakewriter.ForceLen(7, fakewriter.WriteError(errors.New("custom write error"))),
+	)
+	n, err := w.Write([]byte{1})
+	assert.EqualError(t, err, "custom write error")
+	assert.Equal(t, 7, n)
 }

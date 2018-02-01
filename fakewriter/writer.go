@@ -19,11 +19,11 @@ func New(t gofaker.FailTrigger, flow ...io.Writer) *Writer {
 
 func (w *Writer) Write(p []byte) (int, error) {
 	if w.locked {
-		w.t.Fatalf("writer locked at %d write", w.wnum+1)
+		w.t.Fatalf("writer locked at %d write [% X]", w.wnum+1, p)
 		return 0, nil
 	}
 	if w.wnum >= len(w.writers) {
-		w.t.Fatalf("unexpected %d write", w.wnum+1)
+		w.t.Fatalf("unexpected %d write [% X]", w.wnum+1, p)
 		return 0, nil
 	}
 
