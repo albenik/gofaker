@@ -19,11 +19,11 @@ func New(t gofaker.FailTrigger, flow ...io.Reader) *Reader {
 
 func (r *Reader) Read(p []byte) (int, error) {
 	if r.locked {
-		r.t.Fatalf("reader locked at %d read", r.rnum+1)
+		r.t.Fatalf("read #%d: reader locked", r.rnum+1)
 		return 0, nil
 	}
 	if r.rnum >= len(r.readers) {
-		r.t.Fatalf("unexpected %d read", r.rnum+1)
+		r.t.Fatalf("read #%d: unexpected", r.rnum+1)
 		return 0, nil
 	}
 
