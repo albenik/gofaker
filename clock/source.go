@@ -9,9 +9,13 @@ type Source struct {
 	Sleep func(time.Duration)
 }
 
-var Native = Source{
+var realclock = &Source{
 	Now:   time.Now,
 	Since: time.Since,
 	Sleep: time.Sleep,
 	Until: time.Until,
+}
+
+func Real() *Source {
+	return realclock
 }
