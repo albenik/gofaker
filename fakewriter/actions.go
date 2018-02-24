@@ -16,21 +16,21 @@ func (f WriterFunc) Write(p []byte) (int, error) {
 	return f(p)
 }
 
-func ExpectLen(l int) io.Writer {
+func ExpectLen(exp int) io.Writer {
 	return WriterFunc(func(p []byte) (int, error) {
-		if len(p) != l {
-			return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data length: %d expected but %d recieved [% X]", l, len(p), p)}
+		if len(p) != exp {
+			return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data length %d [% X] (expected %d)", len(p), p, exp)}
 		}
 		return len(p), nil
 	})
 }
 
-func ExpectData(a []byte) io.Writer {
-	return WriterFunc(func(b []byte) (int, error) {
-		if !bytes.Equal(a, b) {
-			return len(b), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data: [% X] expected but [% X] recieved", a, b)}
+func ExpectData(exp []byte) io.Writer {
+	return WriterFunc(func(p []byte) (int, error) {
+		if !bytes.Equal(exp, p) {
+			return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data [% X] (expected [% X])", p, exp)}
 		}
-		return len(b), nil
+		return len(p), nil
 	})
 }
 
