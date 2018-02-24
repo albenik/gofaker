@@ -14,7 +14,7 @@ import (
 )
 
 func TestReader_Read_Success(t *testing.T) {
-	r := fakereader.New(t,
+	r := fakereader.New(t, "test",
 		bytes.NewReader([]byte{1, 2, 3}),
 		bytes.NewReader([]byte{1, 2}),
 		bytes.NewReader([]byte{1}),
@@ -35,18 +35,18 @@ func TestReader_Read_Success(t *testing.T) {
 
 func TestReader_Read_Fail(t *testing.T) {
 	tt := new(gofaker.TestTrigger)
-	r := fakereader.New(tt)
+	r := fakereader.New(tt, "test")
 
 	buf := make([]byte, 3)
 	n, err := r.Read(buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "read #1: unexpected", tt.FailMessage)
+	assert.Equal(t, "test read #1: unexpected", tt.FailMessage)
 }
 
 func TestStrictBytesReader_Success(t *testing.T) {
-	r := fakereader.New(t,
+	r := fakereader.New(t, "test",
 		fakereader.NotLessData([]byte{1, 2, 3}),
 		fakereader.NotLessData([]byte{1, 2, 3}),
 		fakereader.NotLessData([]byte{1, 2}),
@@ -69,7 +69,7 @@ func TestStrictBytesReader_Success(t *testing.T) {
 
 func TestStrictBytesReader_Fail(t *testing.T) {
 	tt := new(gofaker.TestTrigger)
-	r := fakereader.New(tt,
+	r := fakereader.New(tt, "test",
 		fakereader.NotLessData([]byte{211, 212, 213}),
 	)
 
@@ -79,13 +79,13 @@ func TestStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
 	}
 }
 
 func TestUltraStrictBytesReader_Fail(t *testing.T) {
 	tt := new(gofaker.TestTrigger)
-	r := fakereader.New(tt,
+	r := fakereader.New(tt, "test",
 		fakereader.EqualData([]byte{211, 212, 213}),
 	)
 	p := []byte{0xFF}
@@ -95,10 +95,10 @@ func TestUltraStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
 	}
 
-	r = fakereader.New(tt,
+	r = fakereader.New(tt, "test",
 		fakereader.EqualData([]byte{211, 212, 213}),
 	)
 	p = []byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -108,7 +108,7 @@ func TestUltraStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF, 0xFF, 0xFF, 0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "read #1: wrong destination size 4 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 4 (3 expected)", tt.FailMessage)
 	}
 }
 
@@ -116,7 +116,7 @@ func TestDelayRead(t *testing.T) {
 	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
 	fakeclock := clock.NewFakeClock(now).Source()
 
-	r := fakereader.New(t,
+	r := fakereader.New(t, "test",
 		fakereader.DelayRead(3*time.Second, bytes.NewReader([]byte{1, 2, 3}), fakeclock),
 		fakereader.DelayRead(2*time.Second, bytes.NewReader([]byte{1, 2}), fakeclock),
 		fakereader.DelayRead(1*time.Second, bytes.NewReader([]byte{1}), fakeclock),
@@ -140,7 +140,7 @@ func TestDelayRead_Strict_Success(t *testing.T) {
 	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
 	fakeclock := clock.NewFakeClock(now).Source()
 
-	r := fakereader.New(t,
+	r := fakereader.New(t, "test",
 		fakereader.DelayRead(3*time.Second, fakereader.NotLessData([]byte{1, 2, 3}), fakeclock),
 		fakereader.DelayRead(2*time.Second, fakereader.NotLessData([]byte{1, 2}), fakeclock),
 		fakereader.DelayRead(1*time.Second, fakereader.NotLessData([]byte{1}), fakeclock),
@@ -165,7 +165,7 @@ func TestDelayRead_Strict_Fail(t *testing.T) {
 	now := time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local)
 	fakeclock := clock.NewFakeClock(now).Source()
 
-	r := fakereader.New(tt,
+	r := fakereader.New(tt, "test",
 		fakereader.DelayRead(3*time.Second, fakereader.NotLessData([]byte{211, 212, 213}), fakeclock),
 	)
 
@@ -176,12 +176,12 @@ func TestDelayRead_Strict_Fail(t *testing.T) {
 	assert.Equal(t, []byte{0x00}, p)
 	assert.Equal(t, now.Add(3*time.Second), fakeclock.Now())
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
 	}
 }
 
 func TestReadError(t *testing.T) {
-	r := fakereader.New(t,
+	r := fakereader.New(t, "test",
 		fakereader.ReturnError(errors.New("custom read error")),
 	)
 	p := make([]byte, 1)

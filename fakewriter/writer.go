@@ -8,22 +8,23 @@ import (
 
 type Writer struct {
 	t       gofaker.FailTrigger
+	name    string
 	writers []io.Writer
 	wnum    int
 	locked  bool
 }
 
-func New(t gofaker.FailTrigger, flow ...io.Writer) *Writer {
-	return &Writer{t: t, writers: flow}
+func New(t gofaker.FailTrigger, n string, flow ...io.Writer) *Writer {
+	return &Writer{t: t, name: n, writers: flow}
 }
 
 func (w *Writer) Write(p []byte) (int, error) {
 	if w.locked {
-		w.t.Fatalf("write #%d: locked [% X]", w.wnum+1, p)
+		w.t.Fatalf("%s write #%d: locked [% X]", w.name, w.wnum+1, p)
 		return 0, nil
 	}
 	if w.wnum >= len(w.writers) {
-		w.t.Fatalf("write #%d: unexpected [% X]", w.wnum+1, p)
+		w.t.Fatalf("%s write #%d: unexpected [% X]", w.name, w.wnum+1, p)
 		return 0, nil
 	}
 
@@ -33,7 +34,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 	if err != nil {
 		if fail, ok := err.(*gofaker.ErrTestFailed); ok {
 			w.locked = true
-			w.t.Fatalf("write #%d: %s", w.wnum, fail.Msg)
+			w.t.Fatalf("%s write #%d: %s", w.name, w.wnum, fail.Msg)
 			return n, nil
 		}
 	}
