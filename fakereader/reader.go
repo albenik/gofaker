@@ -3,6 +3,7 @@ package fakereader
 import (
 	"io"
 
+	"github.com/albenik/goerrors"
 	"github.com/albenik/gofaker"
 )
 
@@ -32,7 +33,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 	r.rnum++
 	n, err := fr.Read(p)
 	if err != nil {
-		if fail, ok := err.(*gofaker.ErrTestFailed); ok {
+		if fail, ok := errors.Base(err).(*gofaker.ErrTestFailed); ok {
 			err = nil
 			r.rnum = len(r.readers) // all next read will fail
 			r.t.Fatalf("%s read #%d: %s", r.name, r.rnum, fail.Msg)
