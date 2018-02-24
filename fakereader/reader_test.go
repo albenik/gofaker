@@ -42,7 +42,7 @@ func TestReader_Read_Fail(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "unexpected 1 read", tt.FailMessage)
+	assert.Equal(t, "read #1: unexpected", tt.FailMessage)
 }
 
 func TestStrictBytesReader_Success(t *testing.T) {
