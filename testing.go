@@ -10,7 +10,7 @@ type FailTrigger interface {
 	Fatalf(format string, args ...interface{})
 }
 
-type FailTriggerTest struct {
+type TestTrigger struct {
 	FailedAsExpected bool
 	FailMessage      string
 }
@@ -19,17 +19,17 @@ type ErrTestFailed struct {
 	Msg string
 }
 
-func (ft *FailTriggerTest) Fatal(args ...interface{}) {
+func (ft *TestTrigger) Fatal(args ...interface{}) {
 	ft.FailedAsExpected = true
 	ft.FailMessage = strings.TrimRight(fmt.Sprintln(args...), "\r\n")
 }
 
-func (ft *FailTriggerTest) Fatalf(format string, args ...interface{}) {
+func (ft *TestTrigger) Fatalf(format string, args ...interface{}) {
 	ft.FailedAsExpected = true
 	ft.FailMessage = fmt.Sprintf(format, args...)
 }
 
-func (ft *FailTriggerTest) Reset() {
+func (ft *TestTrigger) Reset() {
 	ft.FailedAsExpected = false
 	ft.FailMessage = ""
 }

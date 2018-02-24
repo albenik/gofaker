@@ -13,7 +13,7 @@ import (
 )
 
 func TestWriter_EOF(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt)
 
@@ -25,7 +25,7 @@ func TestWriter_EOF(t *testing.T) {
 }
 
 func TestWriter_Locked(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectLen(101),
@@ -67,7 +67,7 @@ func TestAssertLen_OK(t *testing.T) {
 }
 
 func TestAssertLen_MismatchNonzero(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectLen(3),
@@ -81,7 +81,7 @@ func TestAssertLen_MismatchNonzero(t *testing.T) {
 }
 
 func TestAssertLen_MismatchZero(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectLen(3),
@@ -95,7 +95,7 @@ func TestAssertLen_MismatchZero(t *testing.T) {
 }
 
 func TestAssertLen_MismatchNil(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectLen(3),
@@ -129,7 +129,7 @@ func TestAssertData_OK(t *testing.T) {
 }
 
 func TestAssertData_MismatchNonempty(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectData([]byte{1, 2, 3}),
@@ -143,7 +143,7 @@ func TestAssertData_MismatchNonempty(t *testing.T) {
 }
 
 func TestAssertData_MismatchEmpty(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectData([]byte{1, 2, 3}),
@@ -157,7 +157,7 @@ func TestAssertData_MismatchEmpty(t *testing.T) {
 }
 
 func TestAssertData_MismatchZero(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 
 	w := fakewriter.New(tt,
 		fakewriter.ExpectData([]byte{1, 2, 3}),
@@ -201,7 +201,7 @@ func TestShortWrite_NoShort_Success(t *testing.T) {
 }
 
 func TestShortWrite_FailLen(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 	w := fakewriter.New(tt,
 		fakewriter.ShortWrite(1, fakewriter.ExpectLen(2)),
 	)
@@ -214,7 +214,7 @@ func TestShortWrite_FailLen(t *testing.T) {
 }
 
 func TestShortWrite_FailData(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 	w := fakewriter.New(tt,
 		fakewriter.ShortWrite(1, fakewriter.ExpectData([]byte{1, 2, 3})),
 	)
@@ -247,7 +247,7 @@ func TestDelayWrite_Success(t *testing.T) {
 }
 
 func TestDelayWrite_Fail(t *testing.T) {
-	tt := new(gofaker.FailTriggerTest)
+	tt := new(gofaker.TestTrigger)
 	now := time.Now()
 	clk := clock.NewFakeClock(now).Source()
 
