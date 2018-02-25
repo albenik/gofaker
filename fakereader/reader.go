@@ -35,7 +35,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 	if err != nil {
 		if fail, ok := errors.Base(err).(*gofaker.ErrTestFailed); ok {
 			err = nil
-			r.rnum = len(r.readers) // all next read will fail
+			r.locked = true
 			r.t.Fatalf("%s read #%d: %s", r.name, r.rnum, fail.Msg)
 		}
 	}
