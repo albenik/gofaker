@@ -36,6 +36,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 		if fail, ok := errors.Base(err).(*gofaker.ErrTestFailed); ok {
 			w.locked = true
 			w.t.Fatalf("%s write #%d: %s", w.name, w.wnum, fail.Msg)
+			return n, nil
 		}
 	}
 	return n, err
