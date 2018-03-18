@@ -1,6 +1,11 @@
 package fakereader
 
-import "io"
+import (
+	"fmt"
+	"io"
+
+	"github.com/albenik/gofaker"
+)
 
 type Frame struct {
 	data []byte
@@ -23,7 +28,18 @@ func (f *Frame) Chunk(ln int) io.Reader {
 	if end > len(f.data) {
 		panic("not enougth data")
 	}
-	r := EqualData(f.data[f.offs:end])
+	src := f.data[f.offs:end]
+	file, line := gofaker.GetSourceCodeLine(4)
+	r := &ReadOperation{
+		File: file,
+		Line: line,
+		Fn: func(dst []byte) (int, error) {
+			if len(dst) != len(src) {
+				return 0, &gofaker.ErrTestFailed{Msg: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src))}
+			}
+			return copy(dst, src), nil
+		},
+	}
 	f.offs = end
 	return r
 }

@@ -29,13 +29,18 @@ func (r *Reader) Read(p []byte) (int, error) {
 		return 0, nil
 	}
 
-	fr := r.readers[r.rnum]
+	op := r.readers[r.rnum]
 	r.rnum++
-	n, err := fr.Read(p)
+	n, err := op.Read(p)
 	if err != nil {
 		if fail, ok := errors.Cause(err).(*gofaker.ErrTestFailed); ok {
 			r.locked = true
-			r.t.Fatalf("%s read #%d: %s", r.name, r.rnum, fail.Msg)
+			switch top := op.(type) {
+			case *ReadOperation:
+				r.t.Fatalf("%s read #%d: %s @ %s:%d", r.name, r.rnum, fail.Msg, top.File, top.Line)
+			default:
+				r.t.Fatalf("%s read #%d: %s <%#v>", r.name, r.rnum, fail.Msg, op)
+			}
 			return n, nil
 		}
 	}

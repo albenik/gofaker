@@ -37,7 +37,7 @@ func TestWriter_Locked(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data length 1 [01] (expected 101)", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data length 1 [01] (expected 101) @ github.com/albenik/gofaker/fakewriter/writer_test.go:31", tt.FailMessage)
 
 	n, err = w.Write([]byte{1})
 	assert.NoError(t, err)
@@ -77,7 +77,7 @@ func TestAssertLen_MismatchNonzero(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data length 2 [01 02] (expected 3)", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data length 2 [01 02] (expected 3) @ github.com/albenik/gofaker/fakewriter/writer_test.go:73", tt.FailMessage)
 }
 
 func TestAssertLen_MismatchZero(t *testing.T) {
@@ -91,7 +91,7 @@ func TestAssertLen_MismatchZero(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data length 0 [] (expected 3)", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data length 0 [] (expected 3) @ github.com/albenik/gofaker/fakewriter/writer_test.go:87", tt.FailMessage)
 }
 
 func TestAssertLen_MismatchNil(t *testing.T) {
@@ -105,7 +105,7 @@ func TestAssertLen_MismatchNil(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data length 0 [] (expected 3)", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data length 0 [] (expected 3) @ github.com/albenik/gofaker/fakewriter/writer_test.go:101", tt.FailMessage)
 }
 
 func TestAssertData_OK(t *testing.T) {
@@ -139,7 +139,7 @@ func TestAssertData_MismatchNonempty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data [01] (expected [01 02 03])", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data [01] (expected [01 02 03]) @ github.com/albenik/gofaker/fakewriter/writer_test.go:135", tt.FailMessage)
 }
 
 func TestAssertData_MismatchEmpty(t *testing.T) {
@@ -153,7 +153,7 @@ func TestAssertData_MismatchEmpty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data [] (expected [01 02 03])", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data [] (expected [01 02 03]) @ github.com/albenik/gofaker/fakewriter/writer_test.go:149", tt.FailMessage)
 }
 
 func TestAssertData_MismatchZero(t *testing.T) {
@@ -167,7 +167,7 @@ func TestAssertData_MismatchZero(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data [] (expected [01 02 03])", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data [] (expected [01 02 03]) @ github.com/albenik/gofaker/fakewriter/writer_test.go:163", tt.FailMessage)
 }
 
 func TestShortWrite_Short_Success(t *testing.T) {
@@ -210,7 +210,7 @@ func TestShortWrite_FailLen(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data length 3 [03 02 01] (expected 2)", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data length 3 [03 02 01] (expected 2) @ github.com/albenik/gofaker/fakewriter/writer_test.go:206", tt.FailMessage)
 }
 
 func TestShortWrite_FailData(t *testing.T) {
@@ -223,7 +223,7 @@ func TestShortWrite_FailData(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data [03 02 01] (expected [01 02 03])", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data [03 02 01] (expected [01 02 03]) @ github.com/albenik/gofaker/fakewriter/writer_test.go:219", tt.FailMessage)
 }
 
 func TestDelayWrite_Success(t *testing.T) {
@@ -260,7 +260,7 @@ func TestDelayWrite_Fail(t *testing.T) {
 	assert.Equal(t, 1, n)
 	assert.Equal(t, now.Add(15*time.Second), clk.Now())
 	assert.True(t, tt.FailedAsExpected)
-	assert.Equal(t, "test write #1: invalid data [01] (expected [01 02 03])", tt.FailMessage)
+	assert.Equal(t, "test write #1: invalid data [01] (expected [01 02 03]) @ github.com/albenik/gofaker/fakewriter/writer_test.go:255", tt.FailMessage)
 }
 
 func TestWriteError(t *testing.T) {

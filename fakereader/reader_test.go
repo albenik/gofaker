@@ -79,7 +79,7 @@ func TestStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected) @ github.com/albenik/gofaker/fakereader/reader_test.go:73", tt.FailMessage)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestUltraStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected) @ github.com/albenik/gofaker/fakereader/reader_test.go:89", tt.FailMessage)
 	}
 
 	r = fakereader.New(tt, "test",
@@ -108,7 +108,7 @@ func TestUltraStrictBytesReader_Fail(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{0xFF, 0xFF, 0xFF, 0xFF}, p)
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "test read #1: wrong destination size 4 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 4 (3 expected) @ github.com/albenik/gofaker/fakereader/reader_test.go:102", tt.FailMessage)
 	}
 }
 
@@ -176,7 +176,7 @@ func TestDelayRead_Strict_Fail(t *testing.T) {
 	assert.Equal(t, []byte{0x00}, p)
 	assert.Equal(t, now.Add(3*time.Second), fakeclock.Now())
 	if assert.True(t, tt.FailedAsExpected) {
-		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected)", tt.FailMessage)
+		assert.Equal(t, "test read #1: wrong destination size 1 (3 expected) @ github.com/albenik/gofaker/fakereader/reader_test.go:169", tt.FailMessage)
 	}
 }
 

@@ -29,13 +29,18 @@ func (w *Writer) Write(p []byte) (int, error) {
 		return 0, nil
 	}
 
-	fw := w.writers[w.wnum]
+	op := w.writers[w.wnum]
 	w.wnum++
-	n, err := fw.Write(p)
+	n, err := op.Write(p)
 	if err != nil {
 		if fail, ok := errors.Cause(err).(*gofaker.ErrTestFailed); ok {
 			w.locked = true
-			w.t.Fatalf("%s write #%d: %s", w.name, w.wnum, fail.Msg)
+			switch top := op.(type) {
+			case *WriteOperation:
+				w.t.Fatalf("%s write #%d: %s @ %s:%d", w.name, w.wnum, fail.Msg, top.File, top.Line)
+			default:
+				w.t.Fatalf("%s write #%d: %s <%#v>", w.name, w.wnum, fail.Msg, op)
+			}
 			return n, nil
 		}
 	}
