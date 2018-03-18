@@ -3,8 +3,8 @@ package fakewriter
 import (
 	"io"
 
-	"github.com/albenik/goerrors"
 	"github.com/albenik/gofaker"
+	"github.com/pkg/errors"
 )
 
 type Writer struct {
@@ -33,7 +33,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 	w.wnum++
 	n, err := fw.Write(p)
 	if err != nil {
-		if fail, ok := errors.Base(err).(*gofaker.ErrTestFailed); ok {
+		if fail, ok := errors.Cause(err).(*gofaker.ErrTestFailed); ok {
 			w.locked = true
 			w.t.Fatalf("%s write #%d: %s", w.name, w.wnum, fail.Msg)
 			return n, nil
