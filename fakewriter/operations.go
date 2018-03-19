@@ -27,7 +27,9 @@ func ExpectLen(exp int) io.Writer {
 		Line: line,
 		Fn: func(p []byte) (int, error) {
 			if len(p) != exp {
-				return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data length %d [% X] (expected %d)", len(p), p, exp)}
+				return len(p), &gofaker.CheckFailed{
+					Message: fmt.Sprintf("invalid data length %d [% X] (expected %d)", len(p), p, exp),
+				}
 			}
 			return len(p), nil
 		},
@@ -41,7 +43,9 @@ func ExpectData(exp []byte) io.Writer {
 		Line: line,
 		Fn: func(p []byte) (int, error) {
 			if !bytes.Equal(exp, p) {
-				return len(p), &gofaker.ErrTestFailed{Msg: fmt.Sprintf("invalid data [% X] (expected [% X])", p, exp)}
+				return len(p), &gofaker.CheckFailed{
+					Message: fmt.Sprintf("invalid data [% X] (expected [% X])", p, exp),
+				}
 			}
 			return len(p), nil
 		}}

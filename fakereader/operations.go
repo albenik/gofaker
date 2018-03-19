@@ -37,7 +37,9 @@ func NotLessData(src []byte) io.Reader {
 		Line: line,
 		Fn: func(dst []byte) (int, error) {
 			if len(dst) < len(src) {
-				return 0, &gofaker.ErrTestFailed{Msg: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src))}
+				return 0, &gofaker.CheckFailed{
+					Message: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src)),
+				}
 			}
 			return copy(dst, src), nil
 		},
@@ -51,7 +53,9 @@ func EqualData(src []byte) io.Reader {
 		Line: line,
 		Fn: func(dst []byte) (int, error) {
 			if len(dst) != len(src) {
-				return 0, &gofaker.ErrTestFailed{Msg: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src))}
+				return 0, &gofaker.CheckFailed{
+					Message: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src)),
+				}
 			}
 			return copy(dst, src), nil
 		},
