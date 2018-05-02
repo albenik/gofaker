@@ -1,9 +1,9 @@
 package gofaker
 
-type CheckFailed struct {
+type AssertionFailedError struct {
 	Message string
 }
 
-func (cf *CheckFailed) Error() string {
+func (cf *AssertionFailedError) Error() string {
 	return cf.Message
 }

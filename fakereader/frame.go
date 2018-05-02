@@ -35,7 +35,7 @@ func (f *Frame) Chunk(ln int) io.Reader {
 		Line: line,
 		Fn: func(dst []byte) (int, error) {
 			if len(dst) != len(src) {
-				return 0, &gofaker.CheckFailed{
+				return 0, &gofaker.AssertionFailedError{
 					Message: fmt.Sprintf("wrong destination size %d (%d expected)", len(dst), len(src)),
 				}
 			}

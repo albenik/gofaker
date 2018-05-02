@@ -20,23 +20,26 @@ func New(n string, flow ...io.Reader) *Reader {
 
 func (r *Reader) Read(p []byte) (int, error) {
 	if r.rnum >= len(r.readers) {
-		panic(fmt.Sprintf("%s read #%d: unexpected", r.name, r.rnum+1))
+		return 0, &gofaker.AssertionFailedError{
+			Message: fmt.Sprintf("%s read #%d: unexpected", r.name, r.rnum+1),
+		}
 	}
 
 	op := r.readers[r.rnum]
 	r.rnum++
 	n, err := op.Read(p)
 	if err != nil {
-		if fail, ok := errors.Cause(err).(*gofaker.CheckFailed); ok {
-			var msg string
-
+		if fail, ok := errors.Cause(err).(*gofaker.AssertionFailedError); ok {
 			switch top := op.(type) {
 			case *ReadOperation:
-				msg = fmt.Sprintf("%s read #%d: %s @ %s:%d", r.name, r.rnum, fail.Message, top.File, top.Line)
+				err = &gofaker.AssertionFailedError{
+					Message: fmt.Sprintf("%s read #%d @ %s:%d: %s", r.name, r.rnum, top.File, top.Line, fail.Message),
+				}
 			default:
-				msg = fmt.Sprintf("%s read #%d: %s <%#v>", r.name, r.rnum, fail.Message, op)
+				err = &gofaker.AssertionFailedError{
+					Message: fmt.Sprintf("%s read #%d <%#v>: %s", r.name, r.rnum, op, fail.Message),
+				}
 			}
-			panic(msg)
 		}
 	}
 	return n, err

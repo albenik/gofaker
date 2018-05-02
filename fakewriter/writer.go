@@ -20,22 +20,26 @@ func New(n string, flow ...io.Writer) *Writer {
 
 func (w *Writer) Write(p []byte) (int, error) {
 	if w.wnum >= len(w.writers) {
-		panic(fmt.Sprintf("%s write #%d: unexpected [% X]", w.name, w.wnum+1, p))
+		return 0, &gofaker.AssertionFailedError{
+			Message: fmt.Sprintf("%s write #%d: unexpected [% X]", w.name, w.wnum+1, p),
+		}
 	}
 
 	op := w.writers[w.wnum]
 	w.wnum++
 	n, err := op.Write(p)
 	if err != nil {
-		if fail, ok := errors.Cause(err).(*gofaker.CheckFailed); ok {
-			var msg string
+		if fail, ok := errors.Cause(err).(*gofaker.AssertionFailedError); ok {
 			switch top := op.(type) {
 			case *WriteOperation:
-				msg = fmt.Sprintf("%s write #%d: %s @ %s:%d", w.name, w.wnum, fail.Message, top.File, top.Line)
+				err = &gofaker.AssertionFailedError{
+					Message: fmt.Sprintf("%s write #%d @ %s:%d: %s", w.name, w.wnum, top.File, top.Line, fail.Message),
+				}
 			default:
-				msg = fmt.Sprintf("%s write #%d: %s <%#v>", w.name, w.wnum, fail.Message, op)
+				err = &gofaker.AssertionFailedError{
+					Message: fmt.Sprintf("%s write #%d <%#v>: %s", w.name, w.wnum, op, fail.Message),
+				}
 			}
-			panic(msg)
 		}
 	}
 	return n, err
