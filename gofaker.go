@@ -1,5 +1,9 @@
 package gofaker
 
+type Fatality interface {
+	Fatalf(format string, args ...interface{})
+}
+
 type AssertionFailedError struct {
 	Message string
 }
